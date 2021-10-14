@@ -8,4 +8,24 @@
   <%= @article.text %>
 </p>
 
-<%= image_tag @article.main_image %>
+<!-- lazy loading: active storage controller redirects to remove service  -->
+<%= link_to image_tag(@article.cover_image), @article.cover_image %>
+
+<!-- immediate loading: generate URLs for images immediately -->
+<%= image_tag @article.cover_image.representation(resize_to_limit: [400, 400]).processed.url %>
+
+<% @article.uploads.each do |upload| %>
+  <!-- images that are variable  -->
+  <% if upload.variable? %>
+    <%= link_to image_tag(upload.variant(resize: "400X400")), upload %>
+  <!-- pdf -->
+  <% elsif upload.previewable? %>
+    <%= link_to image_tag(upload.preview(resize: "400X400")), rails_blob_path(upload, disposition: :attachment) %>
+  <!-- other images -->
+  <% elsif upload.image? %>
+    <%= link_to image_tag(upload, width: 400), upload %>
+  <!-- just download the fule -->
+  <% else %>
+    <%= link_to upload.filename, rails_blob_path(upload, disposition: :attachment) %>
+  <% end %>
+<% end %>
